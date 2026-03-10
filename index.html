@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام إدارة فواتير المياه | مياه الفتح</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">💧</span>
+      <div>
+        <h2>مياه الفتح</h2>
+        <p>نظام الفوترة</p>
+      </div>
+    </div>
+    <nav>
+      <button class="nav active" data-page="dashboard">لوحة التحكم</button>
+      <button class="nav" data-page="subscribers">المشتركين</button>
+      <button class="nav" data-page="collector">شاشة المحصل</button>
+      <button class="nav" data-page="statement">البيان السريع</button>
+      <button class="nav" data-page="accountant">المحاسب المالي</button>
+      <button class="nav" data-page="invoice">إصدار الفاتورة</button>
+      <button class="nav" data-page="reports">التقارير</button>
+      <button class="nav" data-page="settings">الإعدادات</button>
+      <button class="nav" data-page="edit">لوحة التعديل</button>
+    </nav>
+  </aside>
+
+  <main>
+    <section id="dashboard" class="page active">
+      <h1>لوحة التحكم</h1>
+      <div class="cards">
+        <article class="card"><span>عدد المشتركين</span><h2 id="statSubscribers">0</h2></article>
+        <article class="card"><span>إجمالي الاستهلاك</span><h2 id="statConsumption">0</h2></article>
+        <article class="card"><span>إجمالي المستحق</span><h2 id="statDue">0</h2></article>
+        <article class="card"><span>إجمالي المدفوع</span><h2 id="statPaid">0</h2></article>
+        <article class="card"><span>المتأخرات</span><h2 id="statBalance">0</h2></article>
+      </div>
+      <div class="charts">
+        <canvas id="chartConsumption"></canvas>
+        <canvas id="chartFinance"></canvas>
+      </div>
+    </section>
+
+    <section id="subscribers" class="page">
+      <h1>إدارة المشتركين</h1>
+      <div class="form">
+        <label>رقم المشترك / رقم العداد<input id="subId" type="text"></label>
+        <label>الاسم<input id="subName" type="text"></label>
+        <label>الهاتف<input id="subPhone" type="text"></label>
+        <label>العنوان<input id="subAddress" type="text"></label>
+        <button id="addSubscriber" type="button">إضافة / تحديث</button>
+      </div>
+      <label>بحث<input id="searchSubscriber" type="text"></label>
+      <table>
+        <thead><tr><th>رقم العداد</th><th>الاسم</th><th>الهاتف</th><th>العنوان</th><th>إجراءات</th></tr></thead>
+        <tbody id="subsTable"></tbody>
+      </table>
+    </section>
+
+    <section id="collector" class="page">
+      <h1>شاشة المحصل</h1>
+      <div class="form">
+        <label>رقم المشترك<input id="readSub" type="text"></label>
+        <label>اسم المشترك<input id="readName" type="text" readonly></label>
+        <label>القراءة السابقة<input id="readPrev" type="number" min="0"></label>
+        <label>القراءة الحالية<input id="readCurr" type="number" min="0"></label>
+        <label>الوحدات المستهلكة<input id="readCons" type="number" readonly></label>
+        <label>سعر الوحدة وقت الإدخال<input id="readPrice" type="number" readonly></label>
+        <label>المبلغ المستحق<input id="readDue" type="number" readonly></label>
+        <label>تاريخ التحصيل<input id="readDate" type="date"></label>
+        <button id="saveReading" type="button">حفظ القراءة</button>
+      </div>
+    </section>
+
+    <section id="statement" class="page">
+      <h1>البيان السريع</h1>
+      <div class="form"><label>رقم المشترك<input id="statementSearch" type="text"></label></div>
+      <div id="statementBox"></div>
+    </section>
+
+    <section id="accountant" class="page">
+      <h1>المحاسب المالي</h1>
+      <div class="form">
+        <label>رقم المشترك<input id="paySub" type="text"></label>
+        <label>اسم المشترك<input id="payName" type="text" readonly></label>
+        <label>الوحدات المستهلكة<input id="payUnits" type="number" readonly></label>
+        <label>مبلغ الفترة الحالية<input id="payCurrentDue" type="number" readonly></label>
+        <label>رصيد سابق (له/عليه)<input id="payPrevBalance" type="number" readonly></label>
+        <label>إجمالي المستحق<input id="payTotalDue" type="number" readonly></label>
+        <label>المبلغ المدفوع<input id="payAmount" type="number" min="0"></label>
+        <label>طريقة الدفع
+          <select id="payMethod"><option>نقدي</option><option>تحويل</option><option>محفظة</option></select>
+        </label>
+        <label>تاريخ الدفع<input id="payDate" type="date"></label>
+        <button id="savePayment" type="button">تسجيل الدفع</button>
+      </div>
+    </section>
+
+    <section id="invoice" class="page">
+      <h1>إصدار فاتورة</h1>
+      <div class="form">
+        <label>رقم المشترك<input id="invoiceSub" type="text"></label>
+        <label>اسم المشترك<input id="invoiceName" type="text" readonly></label>
+        <button id="generateInvoiceBtn" type="button">عرض فاتورة مشترك</button>
+        <button id="generateAllInvoicesBtn" type="button">إصدار فواتير كل المشتركين</button>
+        <button id="printInvoice" type="button">طباعة</button>
+        <button id="pdfInvoice" type="button">PDF</button>
+      </div>
+      <div id="invoiceView" class="invoice"></div>
+    </section>
+
+    <section id="reports" class="page">
+      <h1>التقارير</h1>
+      <div class="form">
+        <label>من تاريخ<input id="reportFrom" type="date"></label>
+        <label>إلى تاريخ<input id="reportTo" type="date"></label>
+        <button id="buildReport" type="button">عرض التقرير</button>
+        <button id="exportReportPdf" type="button">تصدير PDF</button>
+      </div>
+      <table>
+        <thead><tr><th>رقم العداد</th><th>الاسم</th><th>سابق</th><th>حالي</th><th>الوحدات</th><th>المستحق</th><th>المدفوع</th><th>المتبقي</th></tr></thead>
+        <tbody id="reportTable"></tbody>
+      </table>
+    </section>
+
+    <section id="settings" class="page">
+      <h1>الإعدادات</h1>
+      <div class="form">
+        <label>سعر الوحدة<input id="waterPrice" type="number" min="0"></label>
+        <label>اسم الشركة<input id="companyName" type="text"></label>
+        <label>الهاتف<input id="companyPhone" type="text"></label>
+        <label>العنوان<input id="companyAddress" type="text"></label>
+        <label>يوم دورة القراءة الأولى<input id="cycleDay1" type="number" min="1" max="31"></label>
+        <label>يوم دورة القراءة الثانية<input id="cycleDay2" type="number" min="1" max="31"></label>
+        <button id="saveSettings" type="button">حفظ الإعدادات</button>
+        <button id="resetData" type="button" class="danger">إعادة تهيئة البيانات</button>
+      </div>
+    </section>
+
+    <section id="edit" class="page">
+      <h1>لوحة التعديل</h1>
+      <p>يمكنك حذف أو تعديل أي حركة عبر الجداول التالية:</p>
+      <h3>آخر القراءات</h3>
+      <table><thead><tr><th>#</th><th>مشترك</th><th>تاريخ</th><th>حالي</th><th>المبلغ</th><th>إجراء</th></tr></thead><tbody id="editReadings"></tbody></table>
+      <h3>آخر المدفوعات</h3>
+      <table><thead><tr><th>#</th><th>مشترك</th><th>تاريخ</th><th>المبلغ</th><th>الطريقة</th><th>إجراء</th></tr></thead><tbody id="editPayments"></tbody></table>
+    </section>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
